@@ -1,0 +1,89 @@
+import React, { useState } from 'react'
+import ReactDOM from 'react-dom'
+
+const Button = (props) => (
+  <button onClick={props.handleClick}>
+    {props.text}
+  </button>
+)
+const Statistic = (props) => {
+  return (
+    <div>
+      <p>{props.text}</p>
+      <p>{props.value}</p>
+    </div>
+  )
+}
+
+const Statistics = (props) => {
+  return (
+      <table>
+        <tbody>
+         <tr><td><Statistic text="good" /></td><td><Statistic value={props.good} /></td></tr>
+         <tr><td><Statistic text="neutral"  /></td><td><Statistic value={props.neutral} /></td></tr>
+         <tr><td><Statistic text="bad" /></td><td><Statistic value={props.bad} /></td></tr>
+         <tr><td><Statistic text="all" /></td><td><Statistic value={props.counter} /></td></tr>
+         <tr><td><Statistic text="average" /></td><td><Statistic value={props.sumcounter/props.counter} /></td></tr>
+         <tr><td><Statistic text="positive" /></td><td><Statistic value={props.poscounter/props.counter*100 + " %"} /></td></tr>
+       </tbody>
+      </table>    
+  )
+}
+
+function App() {
+  // save clicks of each button to its own state
+  const [counter, setCounter] = useState(0)
+  const [sumcounter, setSumCounter] = useState(0)
+  const [poscounter, setPosCounter] = useState(0)
+  const [good, setGood] = useState(0)
+  const [neutral, setNeutral] = useState(0)
+  const [bad, setBad] = useState(0)
+
+
+  const setToGood = newValue => {
+    console.log(newValue)
+    setGood(newValue)
+    setCounter(counter + 1)
+    setSumCounter(sumcounter + 1)
+    setPosCounter(poscounter + 1)
+  }
+  const setToNeutral = newValue => {
+    console.log(newValue)
+    setNeutral(newValue)
+    setCounter(counter + 1)
+  }
+  const setToBad = newValue => {
+    console.log(newValue)
+    setBad(newValue)
+    setCounter(counter + 1)
+    setSumCounter(sumcounter - 1)
+  }
+
+  if (counter === 0) {
+    return (
+      <div>
+        <h1>Give feedback</h1>
+        <Button handleClick={() => setToGood(good + 1)} text="good" />
+        <Button handleClick={() => setToNeutral(neutral + 1)} text="neutral" />
+        <Button handleClick={() => setToBad(bad + 1)} text="bad" />
+        <h1>statistics</h1>
+        <p>No feedback given</p>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      <h1>Give feedback</h1>
+      <Button handleClick={() => setToGood(good + 1)} text="good" />
+      <Button handleClick={() => setToNeutral(neutral + 1)} text="neutral" />
+      <Button handleClick={() => setToBad(bad + 1)} text="bad" />
+      <h1>statistics</h1>
+      <Statistics good={good} neutral={neutral} bad={bad} counter={counter} sumcounter={sumcounter} poscounter={poscounter} />
+    </div>
+  )
+}
+
+ReactDOM.render(<App />, 
+  document.getElementById('root')
+)
