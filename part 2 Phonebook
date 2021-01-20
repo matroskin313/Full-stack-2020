@@ -1,0 +1,150 @@
+import React, { useState, useEffect } from 'react'
+import Person from './components/Person'
+import FilteredPerson from './components/FilteredPerson'
+import personService from './services/persons'
+import Notification from './components/Notification'
+import Footer from './components/Footer'
+
+const App = () => {
+  const [persons, setPersons] = useState([])
+  const [newName, setNewName] = useState('')
+  const [number, setNumber] = useState('')
+  const [showByName, setShowByName] = useState('')
+  const [errorMessage, setErrorMessage] = useState('some error happened...')
+
+  useEffect(() => {
+    personService
+    .getAll()
+    .then(response => {
+      setPersons(response.data)
+    })
+  }, [])
+  console.log('render', persons.length, 'persons')
+
+  const toggleDelete = (id) => {
+    
+    const person = persons.find(n => n.id === id)
+  
+  
+  var r = window.confirm("Delete this person?");
+  if (r === true) {
+    
+    personService
+      .deleting(id, person).then(returnedPerson => {
+        setPersons(persons.map(person => person.id !== id ? person : returnedPerson))
+      })
+      .catch(error => {
+        setErrorMessage(
+         'Person was already removed from server'
+        )
+        setTimeout(() => {
+          setErrorMessage(null)
+        }, 2000)
+        setPersons(persons.filter(n => n.id !== id))
+      })
+    }
+  }     
+  
+
+  
+  const addPerson = (event) => {
+    event.preventDefault()
+    
+    const personObject = {
+      name: newName,      
+      number: number
+    } 
+    personService.create(personObject)
+    .then(response => {
+      console.log(response)
+
+      var temp = false;
+
+      for (var i = 0; i < persons.length; i++) {
+        if (persons[i].name === newName && persons[i].number === number) {
+          temp = true;
+          alert(newName + ' is already added to phonebook');
+        } else if (persons[i].name === newName && persons[i].number !== number) {
+          var rr = window.confirm(newName + 'is already added to phonebook, replace the old number with a new one?');
+          if (rr === true) {
+            const person = persons[i]
+            const changedPerson = { ...person, number: number }
+            personService.update(persons[i].id, changedPerson)
+            personService.deleting(persons[i].id, changedPerson)
+            setErrorMessage(
+              'Number is changed'
+             )
+             setTimeout(() => {
+               setErrorMessage(null)
+             }, 2000)
+            setNewName('');
+            setNumber('');
+          }
+        }
+      }
+
+      if (temp !== true) {
+        setPersons(persons.concat(response.data));
+        setNewName('');
+        setNumber('');
+      }
+    })
+
+   
+  }
+
+  const handlePersonChange = (event) => {
+    /*  console.log(event.target.value) */
+    setNewName(event.target.value)
+  }
+
+  const handlePhoneChange = (event) => {
+    /*  console.log(event.target.value) */
+    setNumber(event.target.value)
+  }
+
+
+  const personToShow = showByName
+    ? persons.filter(person => person.name.toLowerCase().includes(showByName.toLowerCase()))
+    : persons
+
+  const handleFilterByName = (event) => {
+    setShowByName(event.target.value)
+
+  }
+
+  return (
+    <div>
+      <h2>Phonebook</h2>
+      <Notification message={errorMessage} />
+      <div>Filter shown with</div>
+      
+        <div><input value={showByName} onChange={handleFilterByName} /> </div>
+        <div>{personToShow.map(person =>
+          <FilteredPerson 
+          key={person.id} 
+          person={person}
+          toggleDelete={() => toggleDelete(person.id)}
+           />
+        )}
+        </div>
+        <form onSubmit={addPerson}>
+        <h2>add a new</h2>
+        <div>name: </div>
+        <div><input value={newName} onChange={handlePersonChange} /> </div>
+        <div>number: </div>
+        <div><input value={number} onChange={handlePhoneChange} /> </div>
+        <div><button type="submit">add</button> </div>
+      </form>
+      <h2>Numbers</h2>
+      <ul>
+        {persons.map(person =>
+          <Person key={person.id} person={person} />
+        )}
+      </ul>
+      <Footer />
+    </div>
+  )
+}
+
+export default App
