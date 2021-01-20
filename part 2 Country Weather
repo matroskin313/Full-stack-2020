@@ -1,0 +1,141 @@
+import React, { useState, useEffect } from "react";
+import FilteredCountry from "./components/FilteredCountry";
+import axios from "axios";
+import OneCountry from "./components/OneCountry";
+
+
+const App = () => {
+  const [countries, setCountries] = useState([]);
+  const [weathers, setWeathers] = useState([]);
+  const [showByName, setShowByName] = useState("");
+  const [showButtonClicked, setshowButtonClicked] = useState(false);
+  const [countryChosen, setCountryChosen] = useState(null);
+
+  const hookCountry = () => {
+    console.log("hookCountry");
+
+    axios.get("https://restcountries.eu/rest/v2/all").then((response) => {
+      console.log("promise fulfilled");
+      console.log(response.data);
+      setCountries(response.data);
+    });
+  };
+  useEffect(hookCountry, []);
+  console.log("render", countries.length, "countries");
+
+  
+
+  const hookWeather = () => {
+    console.log("hookWeather");
+
+    const access_key = "578b6fc02f9385f046c14e11e47d5edc"
+    const proxyurl = "https://cors-anywhere.herokuapp.com/";
+    const url = "http://api.weatherstack.com/current";
+
+   /*  if (countryChosen === null) {
+      var capit = "New York";
+    } else { 
+      capit = countryChosen.capital; 
+    } */
+
+    axios.get(proxyurl + url, {
+      params: {
+        access_key: access_key,
+        query : 'New York',
+        /* query : capit, */
+      }
+    }).then((response) => {
+      console.log(response.data.current);
+      console.log("promise fulfilled2");
+      console.log("temperature:");
+      setWeathers([response.data.current]);
+      
+      }).catch((error) => {
+      console.log(error);
+    });  
+  };
+
+  
+  useEffect(hookWeather, []);
+  console.log("render", weathers.length, "weathers"); 
+  console.log('1 pogoda ' + weathers[0]);
+  
+  const countryToShow = showByName
+    ? countries.filter((country) =>
+        country.name.toLowerCase().includes(showByName.toLowerCase())
+      )
+    : countries;
+
+  const handleFilterByName = (event) => {
+    setShowByName(event.target.value);
+  };
+  //We need to have a state where we define 2 things:
+  //1. somehow notify the app that the show button was clicked.
+  // => use hook, define state for showButtonClicked to false as default, when clicked, we set showButtonClicked to true
+  // 2. we get the country where we click the show button by using Array.find(),
+  //then set the chosenCountry in the state to that country we just found
+ 
+  const showButtonOnClickHandler = (countryNumericCode) => {
+    setshowButtonClicked(true);
+    const chosenCountry = countries.find(
+      (country) => country.numericCode === countryNumericCode
+    );
+    console.log("chosenCountry " + chosenCountry.capital);
+    setCountryChosen(chosenCountry);
+    hookWeather();
+ 
+  };
+  
+  
+  if (countryToShow.length > 10) {
+    return (
+      <div>
+        <div>Find countries</div>
+        <div>
+          <input value={showByName} onChange={handleFilterByName} />
+        </div>
+        <div>Too many matches, specify another filter</div>
+      </div>
+    );
+  } else if (1 < countryToShow.length && countryToShow.length < 10) {
+    return (
+      <div>
+        <div>find countries</div>
+        <div>
+          <input value={showByName} onChange={handleFilterByName} />
+        </div>
+        {showButtonClicked && countryChosen ? (
+          <OneCountry country={countryChosen} weather={weathers}/>
+        ) : (
+          <div>
+            {countryToShow.map((country) => (
+              <FilteredCountry
+                showButtonOnClick={() =>
+                  showButtonOnClickHandler(country.numericCode)
+                }
+                key={country.numericCode}
+                country={country}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  } else {
+    return (
+      <div>
+        <div>find countries</div>
+        <div>
+          <input value={showByName} onChange={handleFilterByName} />
+        </div>
+        <div>
+          {countryToShow.map((country) => (
+            <OneCountry key={country.numericCode} country={country} weathers={weathers}/>
+          ))}
+        </div>
+      </div>
+    );
+  }
+};
+
+export default App;
